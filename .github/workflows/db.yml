@@ -1,0 +1,32 @@
+name: Deploy DB1 Scripts
+
+on:
+  push:
+    branches:
+       - main
+    paths:
+       - 'db1/**'
+
+jobs:
+  deploy-db1:
+    runs-on: ubuntu-latest
+
+    env:
+      RDS_ENDPOINT: ${{ secrets.DB1_RDS_ENDPOINT }}
+      RDS_DB_NAME: ${{ secrets.DB1_RDS_DB_NAME }}
+      RDS_USERNAME: ${{ secrets.DB1_RDS_USERNAME }}
+      RDS_PASSWORD: ${{ secrets.DB1_RDS_PASSWORD }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get install -y postgresql-client
+
+      - name: Execute DB1 Scripts
+        run: |
+          for script in $(find db1 -name "*.sql"); do
+            echo "Executing $script"
+            PGPASSWORD=$RDS_PASSWORD psql -h $RDS_ENDPOINT -d $RDS_DB_NAME -U $RDS_USERNAME -f $script
+          done
